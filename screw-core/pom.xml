@@ -27,7 +27,6 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <scope>provided</scope>
         </dependency>
         <!--lombok-->
         <dependency>
@@ -43,7 +42,7 @@
         <!-- velocity -->
         <dependency>
             <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
+            <artifactId>velocity-engine-core</artifactId>
             <scope>provided</scope>
         </dependency>
         <!--junit-->

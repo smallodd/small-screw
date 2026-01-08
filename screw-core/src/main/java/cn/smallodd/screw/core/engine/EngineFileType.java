@@ -21,6 +21,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 文件类型
@@ -66,5 +68,31 @@ public enum EngineFileType implements Serializable {
         this.fileSuffix = type;
         this.templateNamePrefix = templateFile;
         this.desc = desc;
+    }
+
+    /**
+     * id enum map
+     */
+    public static final Map<String, EngineFileType> ENUM_MAP;
+
+    static {
+        final Map<String, EngineFileType> builder = new HashMap<>();
+        for (final EngineFileType value : EngineFileType.values()) {
+            builder.put(value.getFileSuffix(), value);
+        }
+        ENUM_MAP = builder;
+    }
+
+    /**
+     * 获取数据库类型
+     *
+     * @param dbType {@link String} 数据库类型字符串
+     * @return {@link EngineFileType}
+     */
+
+
+    public static EngineFileType of(final String dbType) {
+        EngineFileType type = ENUM_MAP.get(dbType);
+        return type != null ? type : HTML;
     }
 }

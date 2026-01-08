@@ -50,7 +50,7 @@ public abstract class AbstractExecute implements Execute {
      * @param database {@link String}
      * @return {@link String} 名称
      */
-    String getDocName(String database) {
+    public String getDocName(String database) {
         //自定义文件名称不为空
         if (StringUtils.isNotBlank(config.getEngineConfig().getFileName())) {
             return config.getEngineConfig().getFileName();

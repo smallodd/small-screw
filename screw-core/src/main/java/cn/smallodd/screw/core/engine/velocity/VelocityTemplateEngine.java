@@ -28,7 +28,8 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.log.NullLogChute;
+
+
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -70,12 +71,13 @@ public class VelocityTemplateEngine extends AbstractTemplateEngine {
         // 如果存在自定义模板
         if (StringUtils.isNotBlank(getEngineConfig().getCustomTemplate())) {
             velocityEngine.setProperty("string.resource.loader.class",
-                "org.apache.velocity.runtime.resource.loader.StringResourceLoader");
+                    "org.apache.velocity.runtime.resource.loader.StringResourceLoader");
         } else {
             velocityEngine.setProperty("file.resource.loader.class",
-                "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+                    "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
         }
-        velocityEngine.setProperty("runtime.log.logsystem.class", NullLogChute.class.getName());
+        // 使用 Velocity 2.x 兼容的日志系统
+        velocityEngine.setProperty("runtime.log.logsystem.class", "org.apache.velocity.util.introspection.NullLogSystem");
         velocityEngine.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, "");
         velocityEngine.setProperty(Velocity.ENCODING_DEFAULT, DEFAULT_ENCODING);
         velocityEngine.setProperty(Velocity.INPUT_ENCODING, DEFAULT_ENCODING);
@@ -102,15 +104,15 @@ public class VelocityTemplateEngine extends AbstractTemplateEngine {
             //没有自定义模板，使用核心包自带
             else {
                 template = velocityEngine
-                    .getTemplate(velocity.getTemplateDir()
-                                 + getEngineConfig().getFileType().getTemplateNamePrefix()
-                                 + velocity.getSuffix(),
-                        DEFAULT_ENCODING);
+                        .getTemplate(velocity.getTemplateDir()
+                                        + getEngineConfig().getFileType().getTemplateNamePrefix()
+                                        + velocity.getSuffix(),
+                                DEFAULT_ENCODING);
             }
             // output
             try (FileOutputStream outStream = new FileOutputStream(getFile(docName));
-                    OutputStreamWriter writer = new OutputStreamWriter(outStream, DEFAULT_ENCODING);
-                    BufferedWriter sw = new BufferedWriter(writer)) {
+                 OutputStreamWriter writer = new OutputStreamWriter(outStream, DEFAULT_ENCODING);
+                 BufferedWriter sw = new BufferedWriter(writer)) {
                 //put data
                 VelocityContext context = new VelocityContext();
                 context.put(DATA, info);

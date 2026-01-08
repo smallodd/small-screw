@@ -58,9 +58,9 @@ public class HgdbDocumentationBuilderTest extends AbstractDocumentationExecute {
             //生成文件路径
             .fileOutputDir(fileOutputDir)
             //文件类型
-            .fileType(EngineFileType.HTML)
+            .fileType(EngineFileType.WORD)
             //生成模板实现
-            .produceType(EngineTemplateType.freemarker).build();
+            .produceType(EngineTemplateType.velocity).build();
         //配置
         Configuration config = Configuration.builder()
             //版本
