@@ -11,7 +11,7 @@ public class SmallScrewApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SmallScrewApplication.class, args);
-        log.info("account-statement-data-auth 平台启动成功");
+        log.info("screw-ui启动成功");
     }
 
 }
