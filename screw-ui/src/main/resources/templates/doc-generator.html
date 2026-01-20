@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>数据库文档生成器</title>
+    <meta charset="UTF-8"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<h1>数据库文档生成器</h1>
+<form id="docForm">
+    <div class="form-group">
+        <label>数据库类型：</label>
+        <select name="dbType" required>
+            <option value="">请选择数据库类型</option>
+            <option th:each="db : ${dbTypes}"
+                    th:value="${db.dbType}"
+                    th:text="${db.dbDesc}">数据库类型</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>文档类型：</label>
+        <select name="docFileType" required>
+            <option value="">请选择文档类型</option>
+            <option th:each="ft : ${fileTypes}"
+                    th:value="${ft.fileType}"
+                    th:text="${ft.fileTypeDesc}">文档类型</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>JDBC URL：</label>
+        <input type="text" name="jdbcUrl" required placeholder="例如: jdbc:mysql://localhost:3306/database_name"/>
+    </div>
+
+    <div class="form-group">
+        <label>用户名：</label>
+        <input type="text" name="userName" required/>
+    </div>
+
+    <div class="form-group">
+        <label>密码：</label>
+        <input type="password" name="password" required/>
+    </div>
+
+    <div class="form-group">
+        <label>驱动类名：</label>
+        <input type="text" name="dbDriver" placeholder="例如: com.mysql.cj.jdbc.Driver"/>
+    </div>
+
+    <div class="form-group">
+        <label>文档版本：</label>
+        <input type="text" name="docVersion" value="1.0.0"/>
+    </div>
+
+    <div class="form-group">
+        <label>文档描述：</label>
+        <input type="text" name="docDescription" value="数据库设计文档生成"/>
+    </div>
+
+    <button type="submit">生成文档</button>
+</form>
+
+<script>
+    document.getElementById('docForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const jsonData = {};
+        for (let [key, value] of formData.entries()) {
+            jsonData[key] = value;
+        }
+
+        fetch('/web/smallodd/v1/docBuilder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'document.' + jsonData.docFileType;
+
+                    // 支持 filename*=UTF-8'' 和 filename="" 两种格式
+                    if (contentDisposition) {
+                        // 优先匹配 UTF-8 编码格式
+                        const utf8Match = contentDisposition.match(/filename\*=UTF-8''(.+)/i);
+                        if (utf8Match) {
+                            filename = decodeURIComponent(utf8Match[1]);
+                        } else {
+                            // 回退到标准格式
+                            const standardMatch = contentDisposition.match(/filename="(.+)"/);
+                            if (standardMatch) {
+                                filename = standardMatch[1];
+                            }
+                        }
+                    }
+
+                    return response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    });
+                } else {
+                    // 尝试获取错误响应
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || '生成失败');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('文档生成失败: ' + error.message);
+            });
+    });
+
+</script>
+</body>
+</html>
+
+
+

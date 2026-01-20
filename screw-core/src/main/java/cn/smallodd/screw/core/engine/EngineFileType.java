@@ -23,6 +23,7 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * 文件类型
@@ -76,7 +77,7 @@ public enum EngineFileType implements Serializable {
     public static final Map<String, EngineFileType> ENUM_MAP;
 
     static {
-        final Map<String, EngineFileType> builder = new HashMap<>();
+        final Map<String, EngineFileType> builder = new TreeMap<>();
         for (final EngineFileType value : EngineFileType.values()) {
             builder.put(value.getFileSuffix(), value);
         }
