@@ -215,6 +215,7 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s;
+            flex-direction: column;
         }
 
         .loading-overlay.active {
@@ -229,6 +230,7 @@
             width: 60px;
             height: 60px;
             animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
 
         @keyframes spin {
@@ -383,7 +385,7 @@
 </div>
 
 <script>
-    // 创建通知函数
+    // 创建通知函数（替换原来的alert）
     function showNotification(message, type = 'info', duration = 5000) {
         const container = document.getElementById('notificationContainer');
 
@@ -422,7 +424,28 @@
         }, duration);
     }
 
-    // 表单提交处理
+    // 数据库类型改变时，自动填充驱动类名（辅助功能，非必需）
+    document.getElementById('dbType').addEventListener('change', function() {
+        const driverInput = document.getElementById('dbDriver');
+        const dbType = this.value;
+
+        // 常见的数据库驱动映射
+        const drivers = {
+            'mysql': 'com.mysql.cj.jdbc.Driver',
+            'oracle': 'oracle.jdbc.OracleDriver',
+            'sqlserver': 'com.microsoft.sqlserver.jdbc.SQLServerDriver',
+            'postgresql': 'org.postgresql.Driver',
+            'sqlite': 'org.sqlite.JDBC',
+            'mariadb': 'org.mariadb.jdbc.Driver'
+        };
+
+        // 如果用户没有输入驱动，且当前数据库类型有对应的驱动，则自动填充
+        if (drivers[dbType] && (!driverInput.value || driverInput.value.trim() === '')) {
+            driverInput.value = drivers[dbType];
+        }
+    });
+
+    // 表单提交处理 - 保留您原有的API调用逻辑
     document.getElementById('docForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -435,65 +458,67 @@
             jsonData[key] = value;
         }
 
-        // 模拟API请求延迟
-        setTimeout(() => {
-            // 这里模拟API调用，实际应该调用真实API
-            simulateApiCall(jsonData);
-        }, 800);
-    });
+        // 使用您原有的fetch请求
+        fetch('/web/smallodd/v1/docBuilder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+            .then(response => {
+                // 隐藏加载动画
+                document.getElementById('loadingOverlay').classList.remove('active');
 
-    // 模拟API调用
-    function simulateApiCall(data) {
-        // 模拟API响应
-        const isSuccess = Math.random() > 0.2; // 80%成功率
+                if (response.ok) {
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'database_document.' + jsonData.docFileType;
 
-        // 隐藏加载动画
-        document.getElementById('loadingOverlay').classList.remove('active');
+                    // 支持 filename*=UTF-8'' 和 filename="" 两种格式
+                    if (contentDisposition) {
+                        // 优先匹配 UTF-8 编码格式
+                        const utf8Match = contentDisposition.match(/filename\*=UTF-8''(.+)/i);
+                        if (utf8Match) {
+                            filename = decodeURIComponent(utf8Match[1]);
+                        } else {
+                            // 回退到标准格式
+                            const standardMatch = contentDisposition.match(/filename="(.+)"/);
+                            if (standardMatch) {
+                                filename = standardMatch[1];
+                            }
+                        }
+                    }
 
-        if (isSuccess) {
-            // 模拟文件下载
-            showNotification(`数据库文档(${data.docFileType})生成成功，开始下载`, 'success', 4000);
+                    return response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
 
-            // 创建模拟文件下载
-            setTimeout(() => {
-                const blob = new Blob([`模拟生成的${data.docFileType}文件内容`], {type: 'application/octet-stream'});
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `database_document_${Date.now()}.${data.docFileType}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 1500);
-        } else {
-            // 模拟错误
-            const errors = [
-                "数据库连接失败，请检查JDBC URL和网络连接",
-                "用户名或密码错误，请重新输入",
-                "数据库驱动加载失败，请检查驱动类名",
-                "生成文档时发生错误，请稍后重试"
-            ];
-            const errorMsg = errors[Math.floor(Math.random() * errors.length)];
-            showNotification(errorMsg, 'error', 6000);
-        }
-    }
+                        // 使用通知系统替换alert
+                        showNotification(`文档 ${filename} 生成成功！`, 'success', 4000);
+                    });
+                } else {
+                    // 尝试获取错误响应
+                    return response.json().then(errorData => {
+                        const errorMsg = errorData.message || '文档生成失败，请检查输入信息';
+                        showNotification(errorMsg, 'error', 6000);
+                    }).catch(() => {
+                        showNotification('文档生成失败，请检查网络连接或服务器状态', 'error', 6000);
+                    });
+                }
+            })
+            .catch(error => {
+                // 隐藏加载动画
+                document.getElementById('loadingOverlay').classList.remove('active');
 
-    // 数据库类型改变时，自动填充驱动类名
-    document.getElementById('dbType').addEventListener('change', function() {
-        const driverInput = document.getElementById('dbDriver');
-        const dbType = this.value;
-
-        const drivers = {
-            'mysql': 'com.mysql.cj.jdbc.Driver',
-            'oracle': 'oracle.jdbc.OracleDriver',
-            'sqlserver': 'com.microsoft.sqlserver.jdbc.SQLServerDriver',
-            'postgresql': 'org.postgresql.Driver'
-        };
-
-        if (drivers[dbType] && !driverInput.value) {
-            driverInput.value = drivers[dbType];
-        }
+                console.error('Error:', error);
+                showNotification('请求失败：' + error.message, 'error', 6000);
+            });
     });
 
     // 页面加载时显示欢迎通知
