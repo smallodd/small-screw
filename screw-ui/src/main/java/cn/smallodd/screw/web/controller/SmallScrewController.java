@@ -118,6 +118,7 @@ public class SmallScrewController {
             Configuration config = Configuration.builder()
                     .version(StringUtils.isBlank(docBuilderDTO.getDocVersion()) ? "1.0.0" : docBuilderDTO.getDocVersion())
                     .description(StringUtils.isBlank(docBuilderDTO.getDocDescription()) ? "数据库设计文档生成" : docBuilderDTO.getDocDescription())
+                    .title(StringUtils.isBlank(docBuilderDTO.getDocDescription()) ? "数据库设计文档" : docBuilderDTO.getDocDescription())
                     .dataSource(dataSource)
                     .engineConfig(engineConfig)
                     .build();

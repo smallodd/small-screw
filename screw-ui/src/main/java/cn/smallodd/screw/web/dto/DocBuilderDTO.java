@@ -41,4 +41,9 @@ public class DocBuilderDTO {
      */
     private String docDescription;
 
+    /**
+     * 文档标题
+     */
+    private String docTitle;
+
 }
